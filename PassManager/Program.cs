@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using PassManager;
+using PassManager.Services;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -11,9 +14,17 @@ builder.Host.UseSerilog();
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddDbContext<PassManagerContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "PassManager", Version = "v1" });
+});
+
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
@@ -21,7 +32,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PassManager"));
 }
 
 app.UseHttpsRedirection();
